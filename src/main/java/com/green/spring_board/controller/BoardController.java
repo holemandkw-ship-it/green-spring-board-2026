@@ -102,7 +102,6 @@ public class BoardController {
 
         try {
             boardService.deleteBoard(id);
-
             return ResponseEntity.noContent().build();
 
         } catch (ResourceNotFoundException e) {

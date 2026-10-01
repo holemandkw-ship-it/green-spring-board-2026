@@ -35,14 +35,18 @@ public class BoardController {
     public ResponseEntity<Board> getBoardDetail(@PathVariable int id) {
         try {
             Board board = boardService.getBoard(id);
+
             if (board == null) {
                 return ResponseEntity.notFound().build();
             }
+
             return ResponseEntity.ok(board);
-        }catch (ResourceNotFoundException e){
+
+        } catch (ResourceNotFoundException e) {
             //게시글을 못찾았을때404
             return ResponseEntity.notFound().build();
-        }catch (Exception e){
+
+        } catch (Exception e) {
             //위에도 아니면 ,무조건 java 아니면 db에러로 서버에러500
             return ResponseEntity.internalServerError().build();
         }
@@ -53,21 +57,20 @@ public class BoardController {
     @PostMapping
     public ResponseEntity<Void> createBoard(
             @RequestBody BoardCreateRequest boardCreateRequest) {
-        try{
+
+        try {
             int newBoardId = boardService.createBoard(boardCreateRequest);
 
-            if (newBoardId == -1) {
-                return ResponseEntity.badRequest().build();
-            }
             URI location = URI.create("/api/board/" + newBoardId);
 
             return ResponseEntity.created(location).build();
-        }catch (UserRequestException e){
+
+        } catch (UserRequestException e) {
             return ResponseEntity.badRequest().build();
-        }catch (Exception e){
+
+        } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
         }
-
     }
 
 
@@ -79,15 +82,12 @@ public class BoardController {
 
         try {
             boardService.updateBoard(id, boardCreateRequest);
+
             return ResponseEntity.ok().build();
 
         } catch (ResourceNotFoundException e) {
             // 수정하려는 게시글이 없는 경우
             return ResponseEntity.notFound().build();
-
-        } catch (UserRequestException e) {
-            // 사용자가 수정 값을 잘못 입력한 경우
-            return ResponseEntity.badRequest().build();
 
         } catch (Exception e) {
             // 그 외 서버 오류
@@ -99,6 +99,7 @@ public class BoardController {
     // 삭제
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteBoard(@PathVariable int id) {
+
         try {
             boardService.deleteBoard(id);
 
@@ -113,5 +114,4 @@ public class BoardController {
             return ResponseEntity.internalServerError().build();
         }
     }
-
 }

@@ -25,13 +25,13 @@ public class BoardService {
 
 
     // 상세 조회
-    public Board getBoard(int id) throws Exception {
+    public Board getBoard(int id) {
 
         Optional<Board> optionalBoard = boardRepository.findById(id);
 
         if (optionalBoard.isEmpty()) {
             //요청한 게시글을 찾지 못한 경우
-            throw new Exception("요청한 게시글을 찾지 못했습니다.");
+            throw new ResourceNotFoundException("요청한 게시글을 찾지 못했습니다.");
         }
 
         Board board = optionalBoard.get();
@@ -55,7 +55,7 @@ public class BoardService {
         if (boardCreateRequest.getContent() == null
                 || boardCreateRequest.getContent().isBlank()) {
             //사용자가 값을 잘못 입력한 경우
-            throw new UserRequestException("잘못된 입력값입니다,");
+            throw new UserRequestException("잘못된 입력값입니다.");
         }
 
         Board board = new Board();
@@ -95,11 +95,10 @@ public class BoardService {
 
             board.setContent(boardCreateRequest.getContent());
         }
+
         boardRepository.save(board);
-
-        throw new ResourceNotFoundException("게시글을 찾을 수 없습니다");
-
     }
+
 
     //삭제
     public void deleteBoard(int id) {

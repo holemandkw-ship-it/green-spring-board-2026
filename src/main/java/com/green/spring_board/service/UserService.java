@@ -90,11 +90,21 @@ public class UserService {
             throw new ResourceNotFoundException("User not found");
         }
         User user = userOptional.get();
+
         //수정할건 이메일 닉네임
         //이메일 수정
-        user.setEmail(myInfoResponse.getEmail());
+        if(myInfoResponse.getEmail()!=null
+                && !myInfoResponse.getEmail().isBlank()
+                && !myInfoResponse.getEmail().equals(user.getEmail())
+        ){
+            user.setEmail(myInfoResponse.getEmail());
+        }
         //닉네임 수정
-        user.setNickname(myInfoResponse.getNickname());
+        if(myInfoResponse.getNickname()!=null
+                && !myInfoResponse.getNickname().isBlank()
+        ){
+            user.setNickname(myInfoResponse.getNickname());
+        }
         //db에 저장
         userRepository.save(user);
 

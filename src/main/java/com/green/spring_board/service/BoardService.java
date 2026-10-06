@@ -1,31 +1,60 @@
 package com.green.spring_board.service;
 
+import com.green.spring_board.dto.BoardResponse;
+import com.green.spring_board.dto.BoardUpdateRequest;
+import com.green.spring_board.entity.User;
 import com.green.spring_board.exception.ResourceNotFoundException;
+import com.green.spring_board.exception.UnauthenticatedException;
 import com.green.spring_board.exception.UserRequestException;
 import com.green.spring_board.dto.BoardCreateRequest;
 import com.green.spring_board.entity.Board;
 import com.green.spring_board.repository.BoardRepository;
+import com.green.spring_board.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @Service
 @AllArgsConstructor
 public class BoardService {
-
     private BoardRepository boardRepository;
+    private UserRepository userRepository;
 
 
     // 전체 조회
-    public List<Board> getAllBoard() {
-        return boardRepository.findAll();
+    public List<BoardResponse> getAllBoard() {
+        List<Board> boards = boardRepository.findAll();
+
+        List<BoardResponse> boardResponses = new ArrayList<>();
+
+        for (Board board : boards) {
+            boardResponses.add(
+                    new BoardResponse(
+                            board.getId(),
+                            board.getTitle(),
+                            board.getContent(),
+                            board.getHits(),
+                            board.getUser().getId(),
+                            board.getUser().getNickname(),
+                            board.getCreatedDatetime(),
+                            board.getUpdatedDatetime()
+                    )
+            );
+        }
+        return boardResponses;
+        //List<Board> -> List<BoardResponse> 형태로 변환
+
+        //1.List<BoardResponse> 형태의 빈 리스트 생성
+        //2.Board 개수만큼 반복하며 new BoardResponse생성
+        //3.1번에서 만든 리스트에 추가
     }
 
 
     // 상세 조회
-    public Board getBoard(int id) {
+    public BoardResponse getBoard(int id) {
 
         Optional<Board> optionalBoard = boardRepository.findById(id);
 
@@ -38,13 +67,22 @@ public class BoardService {
 
         board.setHits(board.getHits() + 1);
         boardRepository.save(board);
+        return new BoardResponse(
+                        board.getId(),
+                        board.getTitle(),
+                        board.getContent(),
+                        board.getHits(),
+                        board.getUser().getId(),
+                        board.getUser().getNickname(),
+                        board.getCreatedDatetime(),
+                        board.getUpdatedDatetime()
+                );
 
-        return board;
     }
 
 
     // 삽입
-    public int createBoard(BoardCreateRequest boardCreateRequest) {
+    public int createBoard(BoardCreateRequest boardCreateRequest,Integer userId) {
 
         if (boardCreateRequest.getTitle() == null
                 || boardCreateRequest.getTitle().isBlank()) {
@@ -58,10 +96,17 @@ public class BoardService {
             throw new UserRequestException("잘못된 입력값입니다.");
         }
 
-        Board board = new Board();
+        //userId 유효성 체크(해당 userID의 유저가 정상적으로 존재하는지)
+        //TDTD;; 이후 삭제/탈퇴 유저에 대한 검증도 추가필요
+        Optional<User> user = userRepository.findById(userId);
+        if(user.isEmpty()){
+            throw new UnauthenticatedException("로그인한 사용자를 찾을 수 없습니다.");
+        }
 
+        Board board = new Board();
         board.setTitle(boardCreateRequest.getTitle());
         board.setContent(boardCreateRequest.getContent());
+        board.setUser(user.get());
 
         Board savedBoard = boardRepository.save(board);
 
@@ -72,7 +117,7 @@ public class BoardService {
     // 수정
     public void updateBoard(
             int id,
-            BoardCreateRequest boardCreateRequest) {
+            BoardUpdateRequest boardUpdateRequest) {
 
         Optional<Board> optionalBoard =
                 boardRepository.findById(id);
@@ -84,16 +129,16 @@ public class BoardService {
 
         Board board = optionalBoard.get();
 
-        if (boardCreateRequest.getTitle() != null
-                && !boardCreateRequest.getTitle().isBlank()) {
+        if (boardUpdateRequest.getTitle() != null
+                && !boardUpdateRequest.getTitle().isBlank()) {
 
-            board.setTitle(boardCreateRequest.getTitle());
+            board.setTitle(boardUpdateRequest.getTitle());
         }
 
-        if (boardCreateRequest.getContent() != null
-                && !boardCreateRequest.getContent().isBlank()) {
+        if (boardUpdateRequest.getContent() != null
+                && !boardUpdateRequest.getContent().isBlank()) {
 
-            board.setContent(boardCreateRequest.getContent());
+            board.setContent(boardUpdateRequest.getContent());
         }
 
         boardRepository.save(board);

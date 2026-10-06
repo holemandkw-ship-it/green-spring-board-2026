@@ -23,27 +23,24 @@ public class UserService {
     private final PasswordEncoder passwordEncoder
             = new BCryptPasswordEncoder();
 
-    public void signup(SignupRequest signupRequest){
-        // 우저네임과 비밀번호가 공백인지 아닌지 확인
-        if(signupRequest.getEmail().isBlank()
-            || signupRequest.getPassword().isBlank()){
-            throw new UnsupportedOperationException("Email or password cannot be blank");
-        }
-        // 이메일이 사용 중인지 호가인
-        if(userRepository.existsByEmail(signupRequest.getEmail())) {
+    public void signup(SignupRequest signupRequest) {
+
+        // 이메일이 사용 중인지 확인
+        if (userRepository.existsByEmail(signupRequest.getEmail())) {
             throw new ResourceConflictException("Email already exists");
         }
 
-        //비밀번호 해싱
-      String hashedPassword = passwordEncoder.encode(
+        // 비밀번호 해싱
+        String hashedPassword = passwordEncoder.encode(
                 signupRequest.getPassword()
         );
 
-        // db save
+        // DB save
         User user = new User();
         user.setEmail(signupRequest.getEmail());
         user.setPassword(hashedPassword);
         user.setNickname(signupRequest.getNickname());
+
         userRepository.save(user);
     }
 

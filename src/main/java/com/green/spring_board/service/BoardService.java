@@ -5,7 +5,6 @@ import com.green.spring_board.dto.BoardUpdateRequest;
 import com.green.spring_board.entity.User;
 import com.green.spring_board.exception.ResourceNotFoundException;
 import com.green.spring_board.exception.UnauthenticatedException;
-import com.green.spring_board.exception.UserRequestException;
 import com.green.spring_board.dto.BoardCreateRequest;
 import com.green.spring_board.entity.Board;
 import com.green.spring_board.repository.BoardRepository;
@@ -84,18 +83,6 @@ public class BoardService {
     // 삽입
     public int createBoard(BoardCreateRequest boardCreateRequest,Integer userId) {
 
-        if (boardCreateRequest.getTitle() == null
-                || boardCreateRequest.getTitle().isBlank()) {
-            //사용자가 값을 잘못 입력한 경우
-            throw new UserRequestException("잘못된 입력값 입니다.");
-        }
-
-        if (boardCreateRequest.getContent() == null
-                || boardCreateRequest.getContent().isBlank()) {
-            //사용자가 값을 잘못 입력한 경우
-            throw new UserRequestException("잘못된 입력값입니다.");
-        }
-
         //userId 유효성 체크(해당 userID의 유저가 정상적으로 존재하는지)
         //TDTD;; 이후 삭제/탈퇴 유저에 대한 검증도 추가필요
         Optional<User> user = userRepository.findById(userId);
@@ -119,8 +106,7 @@ public class BoardService {
             int id,
             BoardUpdateRequest boardUpdateRequest) {
 
-        Optional<Board> optionalBoard =
-                boardRepository.findById(id);
+        Optional<Board> optionalBoard = boardRepository.findById(id);
 
         if (optionalBoard.isEmpty()) {
             //게시글을 못찾은 경우
@@ -131,13 +117,11 @@ public class BoardService {
 
         if (boardUpdateRequest.getTitle() != null
                 && !boardUpdateRequest.getTitle().isBlank()) {
-
             board.setTitle(boardUpdateRequest.getTitle());
         }
 
         if (boardUpdateRequest.getContent() != null
                 && !boardUpdateRequest.getContent().isBlank()) {
-
             board.setContent(boardUpdateRequest.getContent());
         }
 

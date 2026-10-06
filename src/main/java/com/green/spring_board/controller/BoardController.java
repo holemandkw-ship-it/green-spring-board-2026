@@ -6,6 +6,7 @@ import java.util.List;
 import com.green.spring_board.dto.BoardResponse;
 import com.green.spring_board.dto.BoardUpdateRequest;
 import com.green.spring_board.exception.ResourceNotFoundException;
+import com.green.spring_board.exception.UnauthenticatedException;
 import com.green.spring_board.exception.UserRequestException;
 import com.green.spring_board.dto.BoardCreateRequest;
 import com.green.spring_board.service.BoardService;
@@ -15,6 +16,7 @@ import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 
 @RestController
 @RequestMapping("/api/board")
@@ -36,23 +38,10 @@ public class BoardController {
 
     // 상세 조회
     @GetMapping("/{id}")
-    public ResponseEntity<BoardResponse> getBoardDetail(@PathVariable int id) {
-        try {
-            BoardResponse board = boardService.getBoard(id);
-            if (board == null) {
-                return ResponseEntity.notFound().build();
-            }
-
-            return ResponseEntity.ok(board);
-
-        } catch (ResourceNotFoundException e) {
-            //게시글을 못찾았을때404
-            return ResponseEntity.notFound().build();
-
-        } catch (Exception e) {
-            //위에도 아니면 ,무조건 java 아니면 db에러로 서버에러500
-            return ResponseEntity.internalServerError().build();
-        }
+    public ResponseEntity<BoardResponse> getBoardDetail(
+            @PathVariable int id) {
+        BoardResponse board = boardService.getBoard(id);
+        return ResponseEntity.ok(board);
     }
 
 
@@ -62,26 +51,21 @@ public class BoardController {
             @Valid @RequestBody BoardCreateRequest boardCreateRequest,
             HttpServletRequest httpServletRequest) {
 
-        try {
-            HttpSession session = httpServletRequest.getSession(false);
+        // 세션 가져오기
+        HttpSession session = httpServletRequest.getSession(false);
 
-            if (session == null || session.getAttribute("userId") == null){
-                return ResponseEntity.status(401).build();
-            }
-            //2 세션에서 유저 아이디 뽑아옴
-            int userId = (int) session.getAttribute("userId");
-            int newBoardId = boardService.createBoard(boardCreateRequest,userId);
-
-            URI location = URI.create("/api/board/" + newBoardId);
-
-            return ResponseEntity.created(location).build();
-
-        } catch (UserRequestException e) {
-            return ResponseEntity.badRequest().build();
-
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
+        // 로그인 여부 확인
+        if (session == null || session.getAttribute("userId") == null) {
+            throw new UnauthenticatedException("로그인이 필요합니다");
         }
+
+        // 세션에서 유저 아이디 뽑아옴
+        int userId = (int) session.getAttribute("userId");
+        // 게시글 생성
+        int newBoardId = boardService.createBoard(boardCreateRequest, userId);
+        // 생성된 게시글 주소
+        URI location = URI.create("/api/board/" + newBoardId);
+        return ResponseEntity.created(location).build();
     }
 
 
@@ -89,40 +73,36 @@ public class BoardController {
     @PatchMapping("/{id}")
     public ResponseEntity<Void> updateBoard(
             @PathVariable int id,
-            @Valid@RequestBody BoardUpdateRequest boardUpdateRequest) {
+            @Valid @RequestBody BoardUpdateRequest boardUpdateRequest,
+            HttpServletRequest httpServletRequest) {
 
-        try {
-            //ToDo
-            boardService.updateBoard(id, boardUpdateRequest);
+        // 세션 가져오기
+        HttpSession session = httpServletRequest.getSession(false);
 
-            return ResponseEntity.ok().build();
-
-        } catch (ResourceNotFoundException e) {
-            // 수정하려는 게시글이 없는 경우
-            return ResponseEntity.notFound().build();
-
-        } catch (Exception e) {
-            // 그 외 서버 오류
-            return ResponseEntity.internalServerError().build();
+        // 로그인 여부 확인
+        if (session == null || session.getAttribute("userId") == null) {
+            throw new UnauthenticatedException("로그인이 필요합니다");
         }
-    }
 
+        // ToDo18 : 본인 확인
+        boardService.updateBoard(id, boardUpdateRequest);
+        return ResponseEntity.ok().build();
+    }
 
     // 삭제
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBoard(@PathVariable int id) {
-
-        try {
-            boardService.deleteBoard(id);
-            return ResponseEntity.noContent().build();
-
-        } catch (ResourceNotFoundException e) {
-            // 삭제하려는 게시글을 찾지 못한 경우
-            return ResponseEntity.notFound().build();
-
-        } catch (Exception e) {
-            // 그 외 서버 오류
-            return ResponseEntity.internalServerError().build();
+    public ResponseEntity<Void> deleteBoard(
+            @PathVariable int id,
+            HttpServletRequest httpServletRequest
+    ){
+        // 세션 가져오기
+        HttpSession session = httpServletRequest.getSession(false);
+        // 로그인 여부 확인
+        if (session == null || session.getAttribute("userId") == null) {
+            throw new UnauthenticatedException("로그인이 필요합니다");
         }
+        // 게시글 삭제
+        boardService.deleteBoard(id);
+        return ResponseEntity.noContent().build();
     }
 }

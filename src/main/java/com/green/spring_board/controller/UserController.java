@@ -29,42 +29,28 @@ public class UserController {
     private final UserRepository userRepository;
 
     @PostMapping("/signup")
-    public ResponseEntity<Void> signup(@Valid@RequestBody SignupRequest signupRequest){
-        try{
-            userService.signup(signupRequest);
-            return ResponseEntity.ok().build();
-        } catch (ResourceConflictException e){
-            return ResponseEntity.status(409).build();
-        } catch (UserRequestException e){
-            return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
+    public ResponseEntity<Void> signup(
+            @Valid @RequestBody SignupRequest signupRequest) {
+        userService.signup(signupRequest);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/login")
-    public  ResponseEntity<Void> login(
+    public ResponseEntity<Void> login(
             @Valid @RequestBody LoginRequest loginRequest,
-            HttpServletRequest httpServletRequest
-    ){
+            HttpServletRequest httpServletRequest) {
 
-        try {
-            int userId = userService.login(loginRequest);
-            HttpSession session = httpServletRequest.getSession();
-            httpServletRequest.changeSessionId();
-            session.setAttribute("userId",userId);
-            return ResponseEntity.ok().build();
-
-        }catch (ResourceNotFoundException e){
-            return ResponseEntity.notFound().build();
-        }catch (UnauthenticatedException e){
-            return ResponseEntity.status(401).build();
-        }catch (Exception e){
-            return ResponseEntity.internalServerError().build();
-        }
-
-
+        // 이메일/비밀번호 확인 후 로그인한 유저 ID 가져오기
+        int userId = userService.login(loginRequest);
+        // 세션 생성
+        HttpSession session = httpServletRequest.getSession();
+        // 세션 ID 변경
+        httpServletRequest.changeSessionId();
+        // 로그인한 유저 ID를 세션에 저장
+        session.setAttribute("userId", userId);
+        return ResponseEntity.ok().build();
     }
+
     @GetMapping("/me")
     public ResponseEntity<MyInfoResponse> getCurrentUser(
             HttpServletRequest httpServletRequest
@@ -78,7 +64,7 @@ public class UserController {
         HttpSession session = httpServletRequest.getSession(false);
 
         if (session == null || session.getAttribute("userId") == null){
-            return ResponseEntity.status(401).build();
+            throw new UnauthenticatedException("로그인이 필요합니다");
         }
         //2 세션에서 유저 아이디 뽑아옴
         int userId = (int) session.getAttribute("userId");
@@ -95,7 +81,8 @@ public class UserController {
         HttpSession session = request.getSession(false);
 
         if (session == null || session.getAttribute("userId") == null) {
-            return ResponseEntity.status(401).build();
+           // return ResponseEntity.status(401).build();
+            throw new UnauthenticatedException("로그인이 필요합니다");
         }
 
         session.invalidate();
@@ -111,7 +98,7 @@ public class UserController {
         HttpSession session = request.getSession(false);
 
         if (session == null || session.getAttribute("userId") == null) {
-            return ResponseEntity.status(401).build();
+            throw new UnauthenticatedException("로그인이 필요합니다");
         }
         // 세션에서 유저 아이디 뽑아옴
         int userId = (int) session.getAttribute("userId");
@@ -133,13 +120,13 @@ public class UserController {
 
         // 로그인 상태 확인
         if (session == null || session.getAttribute("userId") == null) {
-            return ResponseEntity.status(401).build();
+            throw new UnauthenticatedException("로그인이 필요합니다");
         }
 
         // 세션에서 현재 로그인한 유저 아이디 가져오기
         int userId = (int) session.getAttribute("userId");
 
-        // elql tkrwp
+        // DB 삭제
         userService.deleteUser(userId);
         //세션비활성하
         session.invalidate();

@@ -104,6 +104,14 @@ public class BoardController {
             throw new UnauthenticatedException("로그인이 필요합니다");
         }
         // 게시글 삭제
+
+        //둘중어느 방법을 쓸지는 속한팀 조직 컨벤션 따르기
+
+        //삭제 성공시 응답 방법1.
+        //200+ApiRespons<Void>
+
+        //삭제 성공시 응답 방법2
+        //204(No content)+No Body
         boardService.deleteBoard(id);
         return ResponseEntity.ok(ApiResponse.ok());
     }

@@ -5,6 +5,7 @@ import com.green.spring_board.dto.MyInfoResponse;
 import com.green.spring_board.dto.SignupRequest;
 import com.green.spring_board.dto.UserUpdateRequest;
 import com.green.spring_board.entity.User;
+import com.green.spring_board.exception.AuthorizationFailureException;
 import com.green.spring_board.exception.ResourceConflictException;
 import com.green.spring_board.exception.ResourceNotFoundException;
 import com.green.spring_board.exception.UnauthenticatedException;
@@ -19,10 +20,14 @@ import java.util.Optional;
 @Service
 @AllArgsConstructor
 public class UserService {
+
     private final UserRepository userRepository;
+
     private final PasswordEncoder passwordEncoder
             = new BCryptPasswordEncoder();
 
+
+    // 회원가입
     public void signup(SignupRequest signupRequest) {
 
         // 이메일이 사용 중인지 확인
@@ -44,111 +49,123 @@ public class UserService {
         userRepository.save(user);
     }
 
-    public int login(LoginRequest loginRequest){
-        //1이메일 존재하는건지 확인
+
+    // 로그인
+    public int login(LoginRequest loginRequest) {
+
+        // 이메일 존재하는지 확인
         Optional<User> userOptional
                 = userRepository.findByEmail(loginRequest.getEmail());
-        if(userOptional.isEmpty()){
+
+        if (userOptional.isEmpty()) {
             throw new ResourceNotFoundException("User not found");
         }
 
         User user = userOptional.get();
-        //2비밀번호가 올바른지 확인
-        if(!passwordEncoder.matches(loginRequest.getPassword(),user.getPassword())){
+
+        // 비밀번호가 올바른지 확인
+        if (!passwordEncoder.matches(
+                loginRequest.getPassword(),
+                user.getPassword()
+        )) {
             throw new UnauthenticatedException("Wrong password");
         }
-        //3로그인성공
+
+        // 로그인 성공
         return user.getId();
     }
 
-    public MyInfoResponse getUserInfo(int userId){
-        Optional<User> userOptional= userRepository.findById(userId);
-        if(userOptional.isEmpty()){
+
+    // 내 정보 조회
+    public MyInfoResponse getUserInfo(int userId) {
+
+        Optional<User> userOptional
+                = userRepository.findById(userId);
+
+        if (userOptional.isEmpty()) {
             throw new ResourceNotFoundException("User not found");
         }
+
         User user = userOptional.get();
 
-        //4 DB에서 이유저의 닉네임과 이메일을 받아옴
+        // DB에서 유저의 이메일과 닉네임 가져오기
         String email = user.getEmail();
         String nickname = user.getNickname();
 
-        //5 돌려줌
-        MyInfoResponse myInfoResponse =new MyInfoResponse();
+        MyInfoResponse myInfoResponse = new MyInfoResponse();
+
         myInfoResponse.setEmail(email);
         myInfoResponse.setNickname(nickname);
 
         return myInfoResponse;
-
     }
 
-    public void updateUserInfo(int userId, UserUpdateRequest userUpdateRequest) {
-        //로그인한 유저 가져오기
-        Optional<User> userOptional= userRepository.findById(userId);
-        if(userOptional.isEmpty()){
-            throw new ResourceNotFoundException("User not found");
-        }
-        User user = userOptional.get();
 
-        //수정할건 이메일 닉네임
-        //이메일 수정
-        if(userUpdateRequest.getEmail()!=null
-                && !userUpdateRequest.getEmail().isBlank()
-                && !userUpdateRequest.getEmail().equals(user.getEmail())
-        ){
-            user.setEmail(userUpdateRequest.getEmail());
-        }
-        //닉네임 수정
-        if(userUpdateRequest.getNickname()!=null
-                && !userUpdateRequest.getNickname().isBlank()
-        ){
-            user.setNickname(userUpdateRequest.getNickname());
-        }
-        //db에 저장
-        userRepository.save(user);
+    // 유저 정보 수정
+    public void updateUserInfo(
+            int id,
+            UserUpdateRequest userUpdateRequest,
+            int userId
+    ) {
 
+        // 수정할 유저 가져오기
+        Optional<User> userOptional
+                = userRepository.findById(id);
 
-    }
-
-    public void deleteUser(int userId) {
-        // userId로 삭제할 유저 찾기
-        Optional<User> userOptional = userRepository.findById(userId);
-        // 유저가 없으면 예외 발생
         if (userOptional.isEmpty()) {
             throw new ResourceNotFoundException("User not found");
         }
-        // Optional에서 실제 User 꺼내기
+
+        // 수정 대상자와 요청자가 동일한지 확인
+        if (id != userId) {
+            throw new AuthorizationFailureException(
+                    "사용자 작업 권한이 없습니다"
+            );
+        }
+
         User user = userOptional.get();
+
+        // 이메일 수정
+        if (userUpdateRequest.getEmail() != null
+                && !userUpdateRequest.getEmail().isBlank()
+                && !userUpdateRequest.getEmail().equals(user.getEmail())
+        ) {
+            user.setEmail(userUpdateRequest.getEmail());
+        }
+
+        // 닉네임 수정
+        if (userUpdateRequest.getNickname() != null
+                && !userUpdateRequest.getNickname().isBlank()
+        ) {
+            user.setNickname(userUpdateRequest.getNickname());
+        }
+
+        // DB 저장
+        userRepository.save(user);
+    }
+
+
+    // 회원 탈퇴
+    public void deleteUser(int id, int userId) {
+
+        // 삭제할 유저 찾기
+        Optional<User> userOptional
+                = userRepository.findById(id);
+
+        if (userOptional.isEmpty()) {
+            throw new ResourceNotFoundException("User not found");
+        }
+
+        // 탈퇴 대상자와 요청자가 동일한지 확인
+        if (id != userId) {
+            throw new AuthorizationFailureException(
+                    "사용자 작업 권한이 없습니다"
+            );
+        }
+
+        User user = userOptional.get();
+
         // DB에서 유저 삭제
         userRepository.delete(user);
     }
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

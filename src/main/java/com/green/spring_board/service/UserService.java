@@ -103,27 +103,26 @@ public class UserService {
 
     // 유저 정보 수정
     public void updateUserInfo(
-            int id,
-            UserUpdateRequest userUpdateRequest,
-            int userId
+            int userId,
+            UserUpdateRequest userUpdateRequest
     ) {
 
-        // 수정할 유저 가져오기
+        // 로그인한 유저 가져오기
         Optional<User> userOptional
-                = userRepository.findById(id);
+                = userRepository.findById(userId);
 
         if (userOptional.isEmpty()) {
             throw new ResourceNotFoundException("User not found");
         }
 
+        User user = userOptional.get();
+
         // 수정 대상자와 요청자가 동일한지 확인
-        if (id != userId) {
+        if (user.getId() != userId) {
             throw new AuthorizationFailureException(
-                    "사용자 작업 권한이 없습니다"
+                    "본인의 정보만 수정할 수 있습니다."
             );
         }
-
-        User user = userOptional.get();
 
         // 이메일 수정
         if (userUpdateRequest.getEmail() != null
@@ -146,24 +145,24 @@ public class UserService {
 
 
     // 회원 탈퇴
-    public void deleteUser(int id, int userId) {
+    public void deleteUser(int userId) {
 
-        // 삭제할 유저 찾기
+        // 로그인한 유저 가져오기
         Optional<User> userOptional
-                = userRepository.findById(id);
+                = userRepository.findById(userId);
 
         if (userOptional.isEmpty()) {
             throw new ResourceNotFoundException("User not found");
         }
 
+        User user = userOptional.get();
+
         // 탈퇴 대상자와 요청자가 동일한지 확인
-        if (id != userId) {
+        if (user.getId() != userId) {
             throw new AuthorizationFailureException(
-                    "사용자 작업 권한이 없습니다"
+                    "본인만 탈퇴할 수 있습니다."
             );
         }
-
-        User user = userOptional.get();
 
         // DB에서 유저 삭제
         userRepository.delete(user);

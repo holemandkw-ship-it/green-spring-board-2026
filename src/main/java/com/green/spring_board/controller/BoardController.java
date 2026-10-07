@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.util.List;
 
-
 @RestController
 @RequestMapping("/api/board")
 @AllArgsConstructor
@@ -30,7 +29,7 @@ public class BoardController {
     public ResponseEntity<ApiResponse<List<BoardResponse>>> getBoards() {
 
         return ResponseEntity.ok(
-                ApiResponse.ok(boardService.getAllBoard())
+                ApiResponse.ok(boardService.getAllBoards())
         );
     }
 
@@ -43,7 +42,35 @@ public class BoardController {
 
         BoardResponse board = boardService.getBoard(id);
 
-        return ResponseEntity.ok(ApiResponse.ok(board));
+        return ResponseEntity.ok(
+                ApiResponse.ok(board)
+        );
+    }
+
+    // 내가 작성한 게시글 전체 조회
+    @GetMapping("/my-boards")
+    public ResponseEntity<ApiResponse<List<BoardResponse>>> getMyBoards(
+            HttpServletRequest httpServletRequest
+    ) {
+
+        // 세션 가져오기
+        HttpSession session = httpServletRequest.getSession(false);
+
+        // 로그인 확인
+        if (session == null || session.getAttribute("userId") == null) {
+            throw new UnauthenticatedException("로그인이 필요합니다.");
+        }
+
+        // 세션에서 로그인한 유저 id 가져오기
+        int userId = (int) session.getAttribute("userId");
+
+        // 로그인한 유저가 작성한 게시글 조회
+        List<BoardResponse> boards =
+                boardService.getMyBoards(userId);
+
+        return ResponseEntity.ok(
+                ApiResponse.ok(boards)
+        );
     }
 
 
@@ -54,22 +81,17 @@ public class BoardController {
             HttpServletRequest httpServletRequest
     ) {
 
-        // 세션 가져오기
         HttpSession session = httpServletRequest.getSession(false);
 
-        // 로그인 여부 확인
         if (session == null || session.getAttribute("userId") == null) {
-            throw new UnauthenticatedException("로그인이 필요합니다");
+            throw new UnauthenticatedException("로그인이 필요합니다.");
         }
 
-        // 세션에서 로그인한 유저 아이디 가져오기
         int userId = (int) session.getAttribute("userId");
 
-        // 게시글 생성
         int newBoardId =
                 boardService.createBoard(boardCreateRequest, userId);
 
-        // 생성된 게시글 주소
         URI location =
                 URI.create("/api/board/" + newBoardId);
 
@@ -86,20 +108,14 @@ public class BoardController {
             HttpServletRequest httpServletRequest
     ) {
 
-        // 세션 가져오기
         HttpSession session = httpServletRequest.getSession(false);
 
-        // 로그인 여부 확인
         if (session == null || session.getAttribute("userId") == null) {
-            throw new UnauthenticatedException("로그인이 필요합니다");
+            throw new UnauthenticatedException("로그인이 필요합니다.");
         }
 
-        // 세션에서 로그인한 유저 아이디 가져오기
         int userId = (int) session.getAttribute("userId");
 
-        // 게시글 수정
-        // id = 수정할 게시글
-        // userId = 현재 로그인한 요청자
         boardService.updateBoard(
                 id,
                 boardUpdateRequest,
@@ -117,24 +133,17 @@ public class BoardController {
             HttpServletRequest httpServletRequest
     ) {
 
-        // 세션 가져오기
         HttpSession session = httpServletRequest.getSession(false);
 
-        // 로그인 여부 확인
         if (session == null || session.getAttribute("userId") == null) {
-            throw new UnauthenticatedException("로그인이 필요합니다");
+            throw new UnauthenticatedException("로그인이 필요합니다.");
         }
 
-        // 세션에서 로그인한 유저 아이디 가져오기
         int userId = (int) session.getAttribute("userId");
 
-        // 게시글 삭제
-        // id = 삭제할 게시글
-        // userId = 현재 로그인한 요청자
         boardService.deleteBoard(id, userId);
 
-        // 삭제 성공
-        // 200 + ApiResponse<Void>
         return ResponseEntity.ok(ApiResponse.ok());
     }
+
 }

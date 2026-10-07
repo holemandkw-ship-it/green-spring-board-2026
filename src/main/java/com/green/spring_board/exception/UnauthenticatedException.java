@@ -5,3 +5,4 @@ public class UnauthenticatedException extends RuntimeException {
         super(message);
     }
 }
+

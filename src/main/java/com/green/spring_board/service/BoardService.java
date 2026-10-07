@@ -4,11 +4,13 @@ import com.green.spring_board.dto.BoardCreateRequest;
 import com.green.spring_board.dto.BoardResponse;
 import com.green.spring_board.dto.BoardUpdateRequest;
 import com.green.spring_board.entity.Board;
+import com.green.spring_board.entity.Like;
 import com.green.spring_board.entity.User;
 import com.green.spring_board.exception.AuthorizationFailureException;
 import com.green.spring_board.exception.ResourceNotFoundException;
 import com.green.spring_board.exception.UnauthenticatedException;
 import com.green.spring_board.repository.BoardRepository;
+import com.green.spring_board.repository.LikeRepository;
 import com.green.spring_board.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,7 @@ public class BoardService {
 
     private BoardRepository boardRepository;
     private UserRepository userRepository;
+    private LikeRepository likeRepository;
 
 
     // 전체 조회
@@ -43,6 +46,7 @@ public class BoardService {
                             board.getTitle(),
                             board.getContent(),
                             board.getHits(),
+                            board.getLikeCount(),
                             board.getUser().getId(),
                             board.getUser().getNickname(),
                             board.getCreatedDatetime(),
@@ -79,6 +83,7 @@ public class BoardService {
                 board.getTitle(),
                 board.getContent(),
                 board.getHits(),
+                board.getLikeCount(),
                 board.getUser().getId(),
                 board.getUser().getNickname(),
                 board.getCreatedDatetime(),
@@ -102,6 +107,7 @@ public class BoardService {
                             board.getTitle(),
                             board.getContent(),
                             board.getHits(),
+                            board.getLikeCount(),
                             board.getUser().getId(),
                             board.getUser().getNickname(),
                             board.getCreatedDatetime(),
@@ -214,5 +220,57 @@ public class BoardService {
     }
 
 
+    // 좋아요
+    public void pressLike(int id, int userId) {
+
+        // 1. 게시글 찾기
+        Optional<Board> optionalBoard = boardRepository.findById(id);
+
+        if (optionalBoard.isEmpty()) {
+            throw new ResourceNotFoundException("존재하지 않는 게시글입니다");
+        }
+
+        Board board = optionalBoard.get();
+
+        // 2. 로그인한 유저 찾기
+        Optional<User> optionalUser = userRepository.findById(userId);
+
+        if (optionalUser.isEmpty()) {
+            throw new ResourceNotFoundException("존재하지 않는 유저입니다");
+        }
+
+        User user = optionalUser.get();
+
+        //1.이 유저와 보드로 동일한 좋아요가 있는지 확인
+        Optional<Like> likeOptional =
+                likeRepository.findByUserIdAndBoardId(userId,id);
+        if(likeOptional.isEmpty()){
+            //좋아요 추가
+            // 3. 좋아요 객체 만들기
+            Like like = new Like();
+            // 누가 좋아요했는지
+            like.setUser(user);
+            // 어떤 게시글에 좋아요했는지
+            like.setBoard(board);
+            // 4. likes 테이블에 저장
+            likeRepository.save(like);
+
+            // 좋아요 개수 +1
+            board.setLikeCount(board.getLikeCount() + 1);
+            boardRepository.save(board);
+
+        }else{
+
+            //좋아요 삭제
+            Like like = likeOptional.get();
+            likeRepository.deleteById(like.getId());
+
+            // 좋아요 개수 -1
+            board.setLikeCount(board.getLikeCount() - 1);
+            boardRepository.save(board);
+        }
+
+
+    }
 
 }

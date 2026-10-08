@@ -38,7 +38,8 @@ public class BoardController {
     public ResponseEntity<ApiResponse<Page<BoardResponse>>> getBoards(
             HttpServletRequest httpServletRequest,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "latest") String order
     ) {
 
         // 현재 세션 가져오기
@@ -60,7 +61,7 @@ public class BoardController {
         // 각 게시글의 likedByMe 값을 계산한다.
         return ResponseEntity.ok(
                 ApiResponse.ok(boardService
-                        .getAllBoards(userId, page, size)
+                        .getAllBoards(userId, page, size, order)
                 )
         );
     }

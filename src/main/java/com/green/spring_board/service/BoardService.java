@@ -6,6 +6,7 @@ import com.green.spring_board.dto.LikeDetailResponse;
 import com.green.spring_board.entity.Like;
 import com.green.spring_board.entity.User;
 import com.green.spring_board.exception.AuthorizationFailureException;
+import com.green.spring_board.exception.InvalidStateException;
 import com.green.spring_board.exception.ResourceNotFoundException;
 import com.green.spring_board.exception.UnauthenticatedException;
 import com.green.spring_board.dto.BoardCreateRequest;
@@ -14,10 +15,7 @@ import com.green.spring_board.entity.Board;
 import com.green.spring_board.repository.LikeRepository;
 import com.green.spring_board.repository.UserRepository;
 import lombok.AllArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -42,10 +40,20 @@ public class BoardService {
     // 전체 조회
     // =========================
     public Page<BoardResponse> getAllBoards(
-            int userId, int page, int size) {
+            int userId, int page, int size, String order) {
+        Sort sort;
+        if (order.equals("latest")){
+            sort = Sort.by(Sort.Direction.DESC,"createdDatetime");
+        } else if (order.equals("likes")) {
+            sort = Sort.by(Sort.Direction.DESC,"likeCount");
+        } else if (order.equals("views")) {
+            sort = Sort.by(Sort.Direction.DESC,"hits");
+        } else {
+            throw new InvalidStateException("잘못된 정렬 옵션입니다.");
+        }
 
         // boards 테이블의 모든 게시글 조회
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, size, sort);
         Page<Board> boards = boardRepository.findAll(pageable);
 
         // Board Entity를 BoardResponse DTO로 바꿔서 담을 리스트

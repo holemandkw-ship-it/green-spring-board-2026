@@ -155,4 +155,7 @@ public class Board {
     // 이 게시글이 받은 전체 좋아요 개수이다.
     @Column(nullable = false)
     private int likeCount;
+
+    @Column(nullable = false)
+    private boolean isDeleted;
 }

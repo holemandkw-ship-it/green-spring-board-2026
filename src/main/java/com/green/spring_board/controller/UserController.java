@@ -5,14 +5,16 @@ import com.green.spring_board.exception.UnauthenticatedException;
 import com.green.spring_board.repository.UserRepository;
 import com.green.spring_board.service.BoardService;
 import com.green.spring_board.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@Tag()
 @RestController
 
 // User 관련 API의 기본 주소
@@ -30,6 +32,7 @@ public class UserController {
     private final BoardService boardService;
 
 
+    @Operation(summary = "회원가입")
     // =========================
     // 회원가입
     // POST /api/user/signup

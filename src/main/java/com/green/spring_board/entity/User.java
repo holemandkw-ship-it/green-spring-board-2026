@@ -1,5 +1,6 @@
 package com.green.spring_board.entity;
 
+import com.green.spring_board.global.UserState;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -120,4 +121,7 @@ public class User {
             updatable = false
     )
     private LocalDateTime updatedDatetime;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserState state;
 }

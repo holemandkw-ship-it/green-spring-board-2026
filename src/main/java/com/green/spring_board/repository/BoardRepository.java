@@ -34,6 +34,6 @@ public interface BoardRepository extends JpaRepository<Board, Integer> {
     // Board -> User -> id
     //
     // 를 기준으로 게시글을 찾는다.
-    List<Board> findByUserId(int userId);
-    Page<Board> findAll(Pageable pageable);
+    List<Board> findByUserIdAndIsDeletedFalse(int userId);
+    Page<Board> findByIsDeletedFalse(Pageable pageable);
 }

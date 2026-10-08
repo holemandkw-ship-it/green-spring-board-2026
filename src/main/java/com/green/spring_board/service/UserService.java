@@ -8,6 +8,7 @@ import com.green.spring_board.entity.User;
 import com.green.spring_board.exception.ResourceConflictException;
 import com.green.spring_board.exception.ResourceNotFoundException;
 import com.green.spring_board.exception.UnauthenticatedException;
+import com.green.spring_board.global.UserState;
 import com.green.spring_board.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -54,7 +55,7 @@ public class UserService {
         user.setEmail(signupRequest.getEmail());
         user.setPassword(hashedPassword);
         user.setNickname(signupRequest.getNickname());
-
+        user.setState(UserState.ACTIVE);
         // DB 저장
         userRepository.save(user);
     }
@@ -79,6 +80,10 @@ public class UserService {
         }
 
         User user = userOptional.get();
+
+        if(user.getState() == UserState.QUITTED){
+            throw new ResourceNotFoundException("탈퇴된 회원입니다.");
+        }
 
         // 입력한 비밀번호와
         // DB에 저장된 해싱 비밀번호 비교
@@ -112,6 +117,10 @@ public class UserService {
         }
 
         User user = userOptional.get();
+
+        if(user.getState() == UserState.QUITTED){
+            throw new ResourceNotFoundException("탈퇴된 회원입니다.");
+        }
 
         String email = user.getEmail();
         String nickname = user.getNickname();
@@ -147,6 +156,9 @@ public class UserService {
 
         User user = userOptional.get();
 
+        if(user.getState() == UserState.QUITTED){
+            throw new ResourceNotFoundException("탈퇴된 회원입니다.");
+        }
 
         // 이메일 수정
         // null이 아니고
@@ -196,7 +208,7 @@ public class UserService {
 
         User user = userOptional.get();
 
-        // DB에서 유저 삭제
-        userRepository.delete(user);
+        user.setState(UserState.QUITTED);
+        userRepository.save(user);
     }
 }

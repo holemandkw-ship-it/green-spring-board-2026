@@ -54,7 +54,7 @@ public class BoardService {
 
         // boards 테이블의 모든 게시글 조회
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<Board> boards = boardRepository.findAll(pageable);
+        Page<Board> boards = boardRepository.findByIsDeletedFalse(pageable);
 
         // Board Entity를 BoardResponse DTO로 바꿔서 담을 리스트
         List<BoardResponse> boardResponses = new ArrayList<>();
@@ -108,7 +108,10 @@ public class BoardService {
 
         Board board = optionalBoard.get();
 
-        // 강사 코드에 있는 부분
+        if(board.isDeleted()){
+            throw new ResourceNotFoundException("삭제된 게시글입니다");
+        }
+
         User user = board.getUser();
         System.out.println(user.getNickname());
 
@@ -147,10 +150,9 @@ public class BoardService {
 
         // 현재 로그인한 userId가 작성한 게시글 조회
         List<Board> boards =
-                boardRepository.findByUserId(userId);
+                boardRepository.findByUserIdAndIsDeletedFalse(userId);
 
-        List<BoardResponse> boardResponses =
-                new ArrayList<>();
+        List<BoardResponse> boardResponses = new ArrayList<>();
 
         for (Board board : boards) {
 
@@ -293,7 +295,8 @@ public class BoardService {
             );
         }
 
-        boardRepository.deleteById(id);
+        board.setDeleted(true);
+        boardRepository.save(board);
     }
 
 

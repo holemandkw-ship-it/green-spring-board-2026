@@ -1,9 +1,10 @@
 package com.green.spring_board.repository;
 
 import com.green.spring_board.entity.Board;
+import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 
@@ -34,4 +35,5 @@ public interface BoardRepository extends JpaRepository<Board, Integer> {
     //
     // 를 기준으로 게시글을 찾는다.
     List<Board> findByUserId(int userId);
+    Page<Board> findAll(Pageable pageable);
 }

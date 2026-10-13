@@ -13,6 +13,7 @@ import com.green.spring_board.exception.ResourceNotFoundException;
 import com.green.spring_board.repository.BoardRepository;
 import com.green.spring_board.repository.LikeRepository;
 import com.green.spring_board.repository.UserRepository;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,7 +30,11 @@ public class BoardService {
     private UserRepository userRepository;
     private LikeRepository likeRepository;
 
+
+
+
     // 전체 조회
+    @Transactional(readOnly = true)
     public Page<BoardResponse> getAllBoards(int page, int size, String order) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         int userId = userRepository.findByUsername(username).getId();
@@ -73,6 +78,7 @@ public class BoardService {
     }
 
     // 상세 조회
+    @Transactional(readOnly = true)
     public BoardResponse getBoard(int id) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         int userId = userRepository.findByUsername(username).getId();
@@ -107,6 +113,7 @@ public class BoardService {
         );
     }
 
+    @Transactional(readOnly = true)
     public List<BoardResponse> getMyBoards(){
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         int userId = userRepository.findByUsername(username).getId();
@@ -136,6 +143,7 @@ public class BoardService {
         return boardResponses;
     }
 
+    @Transactional
     public int createBoard(BoardCreateRequest boardCreateRequest) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username);
@@ -149,6 +157,7 @@ public class BoardService {
         return savedBoard.getId();
     }
 
+    @Transactional
     public void updateBoard(int id, BoardUpdateRequest boardUpdateRequest) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         int userId = userRepository.findByUsername(username).getId();
@@ -175,6 +184,7 @@ public class BoardService {
         boardRepository.save(board);
     }
 
+    @Transactional
     public void deleteBoard(int id) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         int userId = userRepository.findByUsername(username).getId();
@@ -192,6 +202,7 @@ public class BoardService {
         boardRepository.save(board);
     }
 
+    @Transactional
     public void pressLike(int id) {String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username);
         Optional<Board> optionalBoard = boardRepository.findById(id);
@@ -221,6 +232,7 @@ public class BoardService {
         }
     }
 
+    @Transactional
     public LikeDetailResponse getLikeDetail(int id) {
         // 1. 이 게시글에 좋아요 누른 유저 정보들을 Like 테이블에서 싹 가져옴
         List<Like> likes = likeRepository.findByBoardId(id);
@@ -234,4 +246,38 @@ public class BoardService {
         // 3. 끝
         return likeDetailResponse;
     }
+
+    @Transactional(readOnly = true)
+    public List<BoardResponse> search(String keyword) {
+
+        List<Board> boards = boardRepository.searchByTitle(keyword);
+        String username = SecurityContextHolder.getContext()
+                .getAuthentication().getName();
+        User user = userRepository.findByUsername(username);
+        List<Integer> likedBoardIds =
+                likeRepository.findLikedBoardIdsByUserId(user.getId());
+
+        List<BoardResponse> responses = new ArrayList<>();
+
+        for (Board board : boards) {
+
+            BoardResponse newBoard = new BoardResponse(
+                    board.getId(),
+                    board.getTitle(),
+                    board.getContent(),
+                    board.getHits(),
+                    board.getLikeCount(),
+                    likedBoardIds.contains(board.getId()),
+                    board.getUser().getId(),
+                    board.getUser().getNickname(),
+                    board.getCreatedDatetime(),
+                    board.getUpdatedDatetime()
+            );
+
+            responses.add(newBoard);
+        }
+
+        return responses;
+    }
+
 }

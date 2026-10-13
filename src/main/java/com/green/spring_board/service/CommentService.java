@@ -10,6 +10,7 @@ import com.green.spring_board.exception.ResourceNotFoundException;
 import com.green.spring_board.repository.BoardRepository;
 import com.green.spring_board.repository.CommentRepository;
 import com.green.spring_board.repository.UserRepository;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ public class CommentService {
     private final BoardRepository boardRepository;
     private final UserRepository userRepository;
 
+    @Transactional
     public void createComment(
             CommentCreateRequest commentCreateRequest,
             int boardId
@@ -46,6 +48,7 @@ public class CommentService {
         commentRepository.save(comment);
     }
 
+    @Transactional(readOnly = true)
     public List<CommentResponse> readComments(int boardId){
         if(!boardRepository.existsById(boardId)){
             throw new ResourceNotFoundException("Board not found");
@@ -68,6 +71,7 @@ public class CommentService {
         return commentResponses;
     }
 
+    @Transactional
     public void deleteComment(int commentId) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username);
@@ -86,6 +90,7 @@ public class CommentService {
         commentRepository.save(comment);
     }
 
+    @Transactional
     public void updateComment(
             CommentCreateRequest commentCreateRequest,
             int commentId

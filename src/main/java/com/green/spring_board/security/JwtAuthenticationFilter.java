@@ -45,8 +45,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             // 토큰 위/변조 여부 검사
             if (tokenProvider.validateAccessToken(token)) {
-
-                // 블랙리스트에 등록된 Access Token인지 확인
                 Optional<AccessTokenBlacklist> optionalATB =
                         accessTokenBlacklistRepository.findByToken(token);
                 if (optionalATB.isPresent()) {
